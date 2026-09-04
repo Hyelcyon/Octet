@@ -1,0 +1,14 @@
+[package]
+name = "hyelcyon/octet"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+description = "High-performance byte buffer serialization library for Luau"
+license = "MIT"
+authors = ["Hyelcyon"]
+exclude = ["**"]
+include = ["src", "src/**", "default.project.json", "wally.toml"]
+
+[dependencies]
+
+[dev_dependencies]

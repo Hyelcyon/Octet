@@ -1,0 +1,38 @@
+{
+  "languageMode": "strict",
+  "lintErrors": true,
+  "typeErrors": true,
+  "aliases": {
+    "src": "./src"
+  },
+  "globals": [
+    "game",
+    "script",
+    "workspace",
+    "task",
+    "Enum",
+    "Instance",
+    "Vector2",
+    "Vector3",
+    "CFrame",
+    "Color3",
+    "UDim2",
+    "buffer",
+    "warn",
+    "print",
+    "describe",
+    "it",
+    "expect",
+    "beforeEach",
+    "afterEach"
+  ],
+  "lint": {
+    "*": true,
+    "LocalUnused": true,
+    "LocalShadow": true,
+    "UnknownType": true,
+    "TableOperations": true,
+    "ImplicitReturn": true,
+    "UnreachableCode": true
+  }
+}

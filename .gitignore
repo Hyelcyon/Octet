@@ -1,0 +1,16 @@
+# Packages
+Packages/
+ServerPackages/
+_Index/
+
+# Rojo sourcemap and build artifacts
+sourcemap.json
+*.rbxl
+*.rbxlx
+*.rbxm
+
+# Rokit & toolchain caches
+.rokit/
+.lune/
+.vscode/
+.DS_Store
