@@ -2,6 +2,16 @@
 
 local types = require(script.types)
 
+export type DataTypeInterface<T> = types.DataTypeInterface<T>
+export type Connection = types.Connection
+export type EventProps<T> = types.EventProps<T>
+export type Event<T> = types.Event<T>
+export type ProcedureProps<Req, Res> = types.ProcedureProps<Req, Res>
+export type Procedure<Req, Res> = types.Procedure<Req, Res>
+export type DefinedEvent<T> = types.DefinedEvent<T>
+export type DefinedProcedure<Req, Res> = types.DefinedProcedure<Req, Res>
+export type Octet = types.Octet
+
 local server = require(script.server)
 local client = require(script.client)
 
