@@ -1,0 +1,15 @@
+{
+  "luau-lsp.types.definitionFiles": [
+    "globalTypes.d.luau"
+  ],
+  "luau-lsp.fflags.enableNewSolver": true,
+  "luau-lsp.fflags.override": {
+    "LuauSolverV2": "True"
+  },
+  "luau-lsp.sourcemap.rojoProjectFile": "default.project.json",
+  "luau-lsp.sourcemap.autogenerate": true,
+  "[luau]": {
+    "editor.defaultFormatter": "JohnnyMorganz.stylua",
+    "editor.formatOnSave": true
+  }
+}

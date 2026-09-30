@@ -1,23 +1,23 @@
 --!strict
 
-local types = require(script.Parent.types)
-local event = require(script.event)
+const types = require(script.Parent.types)
+const event = require(script.event)
 
 local autoId = 0
 
-local function defineEvent<T>(props: types.EventProps<T>): types.DefinedEvent<T>
+const function defineEvent<T>(props: types.EventProps<T>): types.DefinedEvent<T>
   autoId += 1
-  local defaultId = autoId
+  const defaultId = autoId
   local instantiated: types.Event<T>? = nil
 
-  local function getInstance(): types.Event<T>
+  const function getInstance(): types.Event<T>
     if instantiated == nil then
       instantiated = event(props, defaultId)
     end
     return instantiated :: types.Event<T>
   end
 
-  local definition: types.DefinedEvent<T> = {
+  const definition: types.DefinedEvent<T> = table.freeze({
     build = function(id: number): types.Event<T>
       return event(props, id)
     end,
@@ -42,7 +42,7 @@ local function defineEvent<T>(props: types.EventProps<T>): types.DefinedEvent<T>
     wait = function(_self: types.Event<T>): (T, Player?)
       return getInstance():wait()
     end,
-  }
+  })
 
   return definition
 end

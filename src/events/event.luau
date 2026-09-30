@@ -1,13 +1,13 @@
 --!strict
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+const Players = game:GetService("Players")
+const RunService = game:GetService("RunService")
 
-local types = require(script.Parent.Parent.types)
-local server = require(script.Parent.Parent.server)
-local client = require(script.Parent.Parent.client)
+const types = require(script.Parent.Parent.types)
+const server = require(script.Parent.Parent.server)
+const client = require(script.Parent.Parent.client)
 
-local isServer = RunService:IsServer()
+const isServer = RunService:IsServer()
 
 type Callback<T> = (data: T, player: Player?) -> ()
 
@@ -17,18 +17,19 @@ type ListenerNode<T> = {
   prev: ListenerNode<T>?,
 }
 
-local function createEvent<T>(props: types.EventProps<T>, id: number): types.Event<T>
-  local reliability = if props.reliability ~= nil then props.reliability else "reliable"
-  local codec = props.value
+const function createEvent<T>(props: types.EventProps<T>, id: number): types.Event<T>
+  const reliability = if props.reliability ~= nil then props.reliability else "reliable"
+  const codec = props.value
 
   local head: ListenerNode<T>? = nil
   local tail: ListenerNode<T>? = nil
 
-  local function dispatch(typedData: T, player: Player?)
+  @native
+  const function dispatch(typedData: T, player: Player?)
     local current = head
     while current ~= nil do
-      local nextNode = current.next
-      local cb = current.callback
+      const nextNode = current.next
+      const cb = current.callback
       if cb ~= nil then
         cb(typedData, player)
       end
@@ -46,15 +47,15 @@ local function createEvent<T>(props: types.EventProps<T>, id: number): types.Eve
     end)
   end
 
-  local function addListener(callback: Callback<T>): types.Connection
-    local node: ListenerNode<T> = {
+  const function addListener(callback: Callback<T>): types.Connection
+    const node: ListenerNode<T> = {
       callback = callback,
       next = nil :: ListenerNode<T>?,
       prev = tail,
     }
 
     local connection: types.Connection
-    local function disconnectAction(_selfConn: types.Connection)
+    const function disconnectAction(_selfConn: types.Connection)
       if not connection.connected then
         return
       end
@@ -93,8 +94,7 @@ local function createEvent<T>(props: types.EventProps<T>, id: number): types.Eve
     return connection
   end
 
-  local event: types.Event<T>
-  event = {
+  const event: types.Event<T> = table.freeze({
     fire = @native function(_self: types.Event<T>, data: T)
       if isServer then
         error("Cannot call event:fire on the server. Use event:fireTo or event:broadcast.")
@@ -112,14 +112,14 @@ local function createEvent<T>(props: types.EventProps<T>, id: number): types.Eve
       end
 
       if typeof(target) == "Instance" and target:IsA("Player") then
-        local player = target :: Player
+        const player = target :: Player
         if reliability == "reliable" then
           server:sendPlayerReliable(player, id, codec, data)
         else
           server:sendPlayerUnreliable(player, id, codec, data)
         end
       elseif type(target) == "table" then
-        local players = target :: { Player }
+        const players = target :: { Player }
         if reliability == "reliable" then
           server:sendPlayersReliable(players, id, codec, data)
         else
@@ -173,7 +173,7 @@ local function createEvent<T>(props: types.EventProps<T>, id: number): types.Eve
     end,
 
     wait = function(self: types.Event<T>): (T, Player?)
-      local running = coroutine.running()
+      const running = coroutine.running()
       local conn: types.Connection
       conn = self:connect(function(data: T, player: Player?)
         conn:disconnect()
@@ -181,7 +181,7 @@ local function createEvent<T>(props: types.EventProps<T>, id: number): types.Eve
       end)
       return coroutine.yield()
     end,
-  }
+  })
 
   return event
 end

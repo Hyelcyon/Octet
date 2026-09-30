@@ -1,11 +1,11 @@
 --!strict
 
-local types = require(script.Parent.Parent.types)
+const types = require(script.Parent.Parent.types)
 
-local function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeInterface<{ T }>
-  return {
+const function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeInterface<{ T }>
+  return table.freeze({
     write = @native function(b: buffer, cursor: number, value: { T }, references: { unknown }?): number
-      local count = #value
+      const count = #value
       buffer.writeu16(b, cursor, count)
       local currentCursor = cursor + 2
 
@@ -17,12 +17,12 @@ local function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeIn
     end,
 
     read = @native function(b: buffer, cursor: number, references: { unknown }?): ({ T }, number)
-      local count = buffer.readu16(b, cursor)
+      const count = buffer.readu16(b, cursor)
       local currentCursor = cursor + 2
-      local arr = table.create(count) :: { T }
+      const arr = table.create(count) :: { T }
 
       for i = 1, count do
-        local item, readBytes = valueType.read(b, currentCursor, references)
+        const item, readBytes = valueType.read(b, currentCursor, references)
         arr[i] = item
         currentCursor += readBytes
       end
@@ -31,7 +31,7 @@ local function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeIn
     end,
 
     skip = @native function(b: buffer, cursor: number): number
-      local count = buffer.readu16(b, cursor)
+      const count = buffer.readu16(b, cursor)
       local currentCursor = cursor + 2
 
       for _ = 1, count do
@@ -48,7 +48,7 @@ local function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeIn
       end
       return total
     end,
-  }
+  })
 end
 
 return array

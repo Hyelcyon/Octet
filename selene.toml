@@ -1,1 +1,17 @@
 std = "roblox"
+
+[rules]
+unused_variable = "deny"
+multiple_statements = "deny"
+shadowing = "warn"
+empty_if = "warn"
+empty_loop = "warn"
+unbalanced_assignments = "deny"
+parenthese_conditions = "deny"
+divide_by_zero = "warn"
+manual_table_clone = "warn"
+incorrect_standard_library_use = "deny"
+global_usage = "deny"
+
+[config]
+empty_if = { comments_count = true }

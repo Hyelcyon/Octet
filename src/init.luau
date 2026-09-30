@@ -1,6 +1,6 @@
 --!strict
 
-local types = require(script.types)
+const types = require(script.types)
 
 export type DataTypeInterface<T> = types.DataTypeInterface<T>
 export type Connection = types.Connection
@@ -12,45 +12,45 @@ export type DefinedEvent<T> = types.DefinedEvent<T>
 export type DefinedProcedure<Req, Res> = types.DefinedProcedure<Req, Res>
 export type Octet = types.Octet
 
-local server = require(script.server)
-local client = require(script.client)
+const server = require(script.server)
+const client = require(script.client)
 
-local event = require(script.events)
-local procedure = require(script.procedures)
-local contract = require(script.contracts.contract)
+const event = require(script.events)
+const procedure = require(script.procedures)
+const contract = require(script.contracts.contract)
 
-local int8 = require(script.dataTypes.int.int8)
-local int16 = require(script.dataTypes.int.int16)
-local int24 = require(script.dataTypes.int.int24)
-local int32 = require(script.dataTypes.int.int32)
+const int8 = require(script.dataTypes.int.int8)
+const int16 = require(script.dataTypes.int.int16)
+const int24 = require(script.dataTypes.int.int24)
+const int32 = require(script.dataTypes.int.int32)
 
-local uint8 = require(script.dataTypes.uint.uint8)
-local uint16 = require(script.dataTypes.uint.uint16)
-local uint24 = require(script.dataTypes.uint.uint24)
-local uint32 = require(script.dataTypes.uint.uint32)
+const uint8 = require(script.dataTypes.uint.uint8)
+const uint16 = require(script.dataTypes.uint.uint16)
+const uint24 = require(script.dataTypes.uint.uint24)
+const uint32 = require(script.dataTypes.uint.uint32)
 
-local float32 = require(script.dataTypes.float.float32)
-local float48 = require(script.dataTypes.float.float48)
-local float64 = require(script.dataTypes.float.float64)
+const float32 = require(script.dataTypes.float.float32)
+const float48 = require(script.dataTypes.float.float48)
+const float64 = require(script.dataTypes.float.float64)
 
-local bool = require(script.dataTypes.bool)
-local str = require(script.dataTypes.str)
-local buff = require(script.dataTypes.buff)
-local null = require(script.dataTypes.null)
-local any = require(script.dataTypes.any)
+const bool = require(script.dataTypes.bool)
+const str = require(script.dataTypes.str)
+const buff = require(script.dataTypes.buff)
+const null = require(script.dataTypes.null)
+const any = require(script.dataTypes.any)
 
-local vec2 = require(script.dataTypes.vec.vec2)
-local vec3 = require(script.dataTypes.vec.vec3)
-local color2 = require(script.dataTypes.color.color2)
-local color3 = require(script.dataTypes.color.color3)
-local cframe = require(script.dataTypes.cframe)
+const vec2 = require(script.dataTypes.vec.vec2)
+const vec3 = require(script.dataTypes.vec.vec3)
+const color2 = require(script.dataTypes.color.color2)
+const color3 = require(script.dataTypes.color.color3)
+const cframe = require(script.dataTypes.cframe)
 
-local optional = require(script.dataTypes.optional)
-local array = require(script.dataTypes.array)
-local map = require(script.dataTypes.map)
-local struct = require(script.dataTypes.struct)
+const optional = require(script.dataTypes.optional)
+const array = require(script.dataTypes.array)
+const map = require(script.dataTypes.map)
+const struct = require(script.dataTypes.struct)
 
-local RunService = game:GetService("RunService")
+const RunService = game:GetService("RunService")
 
 if RunService:IsServer() then
   server:start()
@@ -58,7 +58,7 @@ else
   client:start()
 end
 
-local dts = {
+const dts = table.freeze({
   event = event,
   procedure = procedure,
   contract = contract,
@@ -93,6 +93,6 @@ local dts = {
   array = array,
   map = map,
   struct = struct,
-}
+})
 
-return (table.freeze(dts)) :: types.Octet
+return (dts :: unknown) :: types.Octet

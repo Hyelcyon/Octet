@@ -1,9 +1,9 @@
 --!strict
 
-local types = require(script.Parent.Parent.types)
+const types = require(script.Parent.Parent.types)
 
-local function optional<T>(valueType: types.DataTypeInterface<T>): types.DataTypeInterface<T?>
-  return {
+const function optional<T>(valueType: types.DataTypeInterface<T>): types.DataTypeInterface<T?>
+  return table.freeze({
     write = @native function(b: buffer, cursor: number, value: T?, references: { unknown }?): number
       if value ~= nil then
         buffer.writeu8(b, cursor, 1)
@@ -19,7 +19,7 @@ local function optional<T>(valueType: types.DataTypeInterface<T>): types.DataTyp
         return nil, 1
       end
 
-      local val, readBytes = valueType.read(b, cursor + 1, references)
+      const val, readBytes = valueType.read(b, cursor + 1, references)
       return val, 1 + readBytes
     end,
 
@@ -33,7 +33,7 @@ local function optional<T>(valueType: types.DataTypeInterface<T>): types.DataTyp
     size = @native function(value: T?): number
       return if value ~= nil then 1 + valueType.size(value) else 1
     end,
-  }
+  })
 end
 
 return optional

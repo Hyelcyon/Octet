@@ -1,34 +1,34 @@
 --!strict
 
-local types = require(script.Parent.Parent.types)
+const types = require(script.Parent.Parent.types)
 
-local scratch = buffer.create(8)
+const scratch = buffer.create(8)
 
-local TAG_NIL = 0
-local TAG_UINT8 = 1
-local TAG_UINT16 = 2
-local TAG_UINT24 = 3
-local TAG_UINT32 = 4
-local TAG_INT8 = 5
-local TAG_INT16 = 6
-local TAG_INT24 = 7
-local TAG_INT32 = 8
-local TAG_FLOAT32 = 9
-local TAG_FLOAT64 = 10
-local TAG_BOOL_FALSE = 11
-local TAG_BOOL_TRUE = 12
-local TAG_STR8 = 13
-local TAG_STR16 = 14
-local TAG_VEC2 = 15
-local TAG_VEC3 = 16
-local TAG_COLOR3 = 17
-local TAG_CFRAME = 18
-local TAG_REF = 255
+const TAG_NIL = 0
+const TAG_UINT8 = 1
+const TAG_UINT16 = 2
+const TAG_UINT24 = 3
+const TAG_UINT32 = 4
+const TAG_INT8 = 5
+const TAG_INT16 = 6
+const TAG_INT24 = 7
+const TAG_INT32 = 8
+const TAG_FLOAT32 = 9
+const TAG_FLOAT64 = 10
+const TAG_BOOL_FALSE = 11
+const TAG_BOOL_TRUE = 12
+const TAG_STR8 = 13
+const TAG_STR16 = 14
+const TAG_VEC2 = 15
+const TAG_VEC3 = 16
+const TAG_COLOR3 = 17
+const TAG_CFRAME = 18
+const TAG_REF = 255
 
 type Reader = (b: buffer, cursor: number, references: { unknown }?) -> (unknown, number)
 type Skipper = (b: buffer, cursor: number) -> number
 
-local READERS: { [number]: Reader } = {
+const READERS: { [number]: Reader } = table.freeze({
   [TAG_NIL] = @native function(_b: buffer, _cursor: number): (unknown, number)
     return nil, 1
   end,
@@ -42,9 +42,9 @@ local READERS: { [number]: Reader } = {
   end,
 
   [TAG_UINT24] = @native function(b: buffer, cursor: number): (unknown, number)
-    local low = buffer.readu16(b, cursor + 1)
-    local high = buffer.readu8(b, cursor + 3)
-    return low + high * 65536, 4
+    const low = buffer.readu16(b, cursor + 1)
+    const high = buffer.readu8(b, cursor + 3)
+    return low + high * 65_536, 4
   end,
 
   [TAG_UINT32] = @native function(b: buffer, cursor: number): (unknown, number)
@@ -60,9 +60,9 @@ local READERS: { [number]: Reader } = {
   end,
 
   [TAG_INT24] = @native function(b: buffer, cursor: number): (unknown, number)
-    local low = buffer.readu16(b, cursor + 1)
-    local high = buffer.readi8(b, cursor + 3)
-    return low + high * 65536, 4
+    const low = buffer.readu16(b, cursor + 1)
+    const high = buffer.readi8(b, cursor + 3)
+    return low + high * 65_536, 4
   end,
 
   [TAG_INT32] = @native function(b: buffer, cursor: number): (unknown, number)
@@ -86,12 +86,12 @@ local READERS: { [number]: Reader } = {
   end,
 
   [TAG_STR8] = @native function(b: buffer, cursor: number): (unknown, number)
-    local len = buffer.readu8(b, cursor + 1)
+    const len = buffer.readu8(b, cursor + 1)
     return buffer.readstring(b, cursor + 2, len), len + 2
   end,
 
   [TAG_STR16] = @native function(b: buffer, cursor: number): (unknown, number)
-    local len = buffer.readu16(b, cursor + 1)
+    const len = buffer.readu16(b, cursor + 1)
     return buffer.readstring(b, cursor + 3, len), len + 3
   end,
 
@@ -108,28 +108,28 @@ local READERS: { [number]: Reader } = {
   end,
 
   [TAG_CFRAME] = @native function(b: buffer, cursor: number): (unknown, number)
-    local x = buffer.readf32(b, cursor + 1)
-    local y = buffer.readf32(b, cursor + 5)
-    local z = buffer.readf32(b, cursor + 9)
-    local rx = buffer.readf32(b, cursor + 13)
-    local ry = buffer.readf32(b, cursor + 17)
-    local rz = buffer.readf32(b, cursor + 21)
-    local axis = Vector3.new(rx, ry, rz)
-    local angle = axis.Magnitude
-    local cf = if angle ~= 0 then CFrame.new(x, y, z) * CFrame.fromAxisAngle(axis, angle) else CFrame.new(x, y, z)
+    const x = buffer.readf32(b, cursor + 1)
+    const y = buffer.readf32(b, cursor + 5)
+    const z = buffer.readf32(b, cursor + 9)
+    const rx = buffer.readf32(b, cursor + 13)
+    const ry = buffer.readf32(b, cursor + 17)
+    const rz = buffer.readf32(b, cursor + 21)
+    const axis = Vector3.new(rx, ry, rz)
+    const angle = axis.Magnitude
+    const cf = if angle ~= 0 then CFrame.new(x, y, z) * CFrame.fromAxisAngle(axis, angle) else CFrame.new(x, y, z)
     return cf, 25
   end,
 
   [TAG_REF] = @native function(b: buffer, cursor: number, references: { unknown }?): (unknown, number)
-    local refId = buffer.readu16(b, cursor + 1)
+    const refId = buffer.readu16(b, cursor + 1)
     if references ~= nil and refId > 0 then
       return references[refId], 3
     end
     return nil, 3
   end,
-}
+})
 
-local SKIPPERS: { [number]: Skipper } = {
+const SKIPPERS: { [number]: Skipper } = table.freeze({
   [TAG_NIL] = @native function(_b: buffer, _cursor: number): number
     return 1
   end,
@@ -209,14 +209,14 @@ local SKIPPERS: { [number]: Skipper } = {
   [TAG_REF] = @native function(_b: buffer, _cursor: number): number
     return 3
   end,
-}
+})
 
-local any: types.DataTypeInterface<unknown> = {
+const any: types.DataTypeInterface<unknown> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: unknown, references: { unknown }?): number
-    local vType = typeof(value)
+    const vType = typeof(value)
 
     if vType == "number" then
-      local num = value :: number
+      const num = value :: number
       if num % 1 == 0 and num >= -2147483648 and num <= 4294967295 then
         if num >= 0 then
           if num <= 255 then
@@ -273,8 +273,8 @@ local any: types.DataTypeInterface<unknown> = {
       buffer.writeu8(b, cursor, if value then TAG_BOOL_TRUE else TAG_BOOL_FALSE)
       return 1
     elseif vType == "string" then
-      local str = value :: string
-      local len = #str
+      const str = value :: string
+      const len = #str
       if len <= 255 then
         buffer.writeu8(b, cursor, TAG_STR8)
         buffer.writeu8(b, cursor + 1, len)
@@ -287,28 +287,28 @@ local any: types.DataTypeInterface<unknown> = {
         return len + 3
       end
     elseif vType == "Vector3" then
-      local v3 = value :: Vector3
+      const v3 = value :: Vector3
       buffer.writeu8(b, cursor, TAG_VEC3)
       buffer.writef32(b, cursor + 1, v3.X)
       buffer.writef32(b, cursor + 5, v3.Y)
       buffer.writef32(b, cursor + 9, v3.Z)
       return 13
     elseif vType == "Vector2" then
-      local v2 = value :: Vector2
+      const v2 = value :: Vector2
       buffer.writeu8(b, cursor, TAG_VEC2)
       buffer.writef32(b, cursor + 1, v2.X)
       buffer.writef32(b, cursor + 5, v2.Y)
       return 9
     elseif vType == "Color3" then
-      local c3 = value :: Color3
+      const c3 = value :: Color3
       buffer.writeu8(b, cursor, TAG_COLOR3)
       buffer.writeu8(b, cursor + 1, math.round(c3.R * 255))
       buffer.writeu8(b, cursor + 2, math.round(c3.G * 255))
       buffer.writeu8(b, cursor + 3, math.round(c3.B * 255))
       return 4
     elseif vType == "CFrame" then
-      local cf = value :: CFrame
-      local x, y, z = cf.X, cf.Y, cf.Z
+      const cf = value :: CFrame
+      const x, y, z = cf.X, cf.Y, cf.Z
       local axis, angle = cf:ToAxisAngle()
       axis *= angle
       buffer.writeu8(b, cursor, TAG_CFRAME)
@@ -335,8 +335,8 @@ local any: types.DataTypeInterface<unknown> = {
   end,
 
   read = @native function(b: buffer, cursor: number, references: { unknown }?): (unknown, number)
-    local tag = buffer.readu8(b, cursor)
-    local reader = READERS[tag]
+    const tag = buffer.readu8(b, cursor)
+    const reader = READERS[tag]
     if reader ~= nil then
       return reader(b, cursor, references)
     end
@@ -344,8 +344,8 @@ local any: types.DataTypeInterface<unknown> = {
   end,
 
   skip = @native function(b: buffer, cursor: number): number
-    local tag = buffer.readu8(b, cursor)
-    local skipper = SKIPPERS[tag]
+    const tag = buffer.readu8(b, cursor)
+    const skipper = SKIPPERS[tag]
     if skipper ~= nil then
       return skipper(b, cursor)
     end
@@ -353,13 +353,13 @@ local any: types.DataTypeInterface<unknown> = {
   end,
 
   size = @native function(value: unknown): number
-    local vType = typeof(value)
+    const vType = typeof(value)
     if vType == "number" then
       return 9
     elseif vType == "boolean" then
       return 1
     elseif vType == "string" then
-      local len = #(value :: string)
+      const len = #(value :: string)
       return if len <= 255 then len + 2 else len + 3
     elseif vType == "Vector2" then
       return 9
@@ -375,7 +375,7 @@ local any: types.DataTypeInterface<unknown> = {
       return 3
     end
   end,
-}
+})
 
 return function(): types.DataTypeInterface<unknown>
   return any

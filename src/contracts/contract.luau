@@ -11,18 +11,18 @@ type NodeEntry = {
   buildable: Buildable,
 }
 
-local function contract<T>(schema: T): T
+const function contract<T>(schema: T): T
   if type(schema) ~= "table" then
-    return schema
+    return (schema :: any) :: T
   end
 
-  local entries: { NodeEntry } = {}
+  const entries: { NodeEntry } = {}
 
-  local function traverse(node: { [string]: unknown }, currentPath: string)
+  const function traverse(node: { [string]: unknown }, currentPath: string)
     for key, value in node do
-      local subPath = if currentPath == "" then key else `{currentPath}/{key}`
+      const subPath = if currentPath == "" then key else `{currentPath}/{key}`
       if type(value) == "table" then
-        local candidate = value :: { [string]: unknown }
+        const candidate = value :: { [string]: unknown }
         if type(candidate.build) == "function" then
           table.insert(entries, {
             path = subPath,
@@ -47,7 +47,7 @@ local function contract<T>(schema: T): T
     entry.parent[entry.key] = entry.buildable.build(id)
   end
 
-  return schema
+  return (schema :: any) :: T
 end
 
 return contract

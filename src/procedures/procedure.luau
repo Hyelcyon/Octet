@@ -1,19 +1,18 @@
 --!strict
 
-local RunService = game:GetService("RunService")
+const RunService = game:GetService("RunService")
 
-local types = require(script.Parent.Parent.types)
-local server = require(script.Parent.Parent.server)
-local client = require(script.Parent.Parent.client)
+const types = require(script.Parent.Parent.types)
+const server = require(script.Parent.Parent.server)
+const client = require(script.Parent.Parent.client)
 
-local isServer = RunService:IsServer()
+const isServer = RunService:IsServer()
 
-local function createProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>, id: number): types.Procedure<Req, Res>
-  local requestCodec = props.request
-  local responseCodec = props.response
+const function createProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>, id: number): types.Procedure<Req, Res>
+  const requestCodec = props.request
+  const responseCodec = props.response
 
-  local procedure: types.Procedure<Req, Res>
-  procedure = {
+  const procedure: types.Procedure<Req, Res> = table.freeze({
     call = @native function(_self: types.Procedure<Req, Res>, request: Req): Res?
       if isServer then
         error("Cannot call procedure on the server.")
@@ -30,7 +29,7 @@ local function createProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>, 
         server:unregisterProcedure(id)
       end
     end,
-  }
+  })
 
   return procedure
 end

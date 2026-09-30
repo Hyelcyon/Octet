@@ -1,8 +1,8 @@
 --!strict
 
-local types = require(script.Parent.Parent.Parent.types)
+const types = require(script.Parent.Parent.Parent.types)
 
-local vec3: types.DataTypeInterface<Vector3> = {
+const vec3: types.DataTypeInterface<Vector3> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: Vector3, _references: { unknown }?): number
     buffer.writef32(b, cursor, value.X)
     buffer.writef32(b, cursor + 4, value.Y)
@@ -21,7 +21,7 @@ local vec3: types.DataTypeInterface<Vector3> = {
   size = @native function(_value: Vector3): number
     return 12
   end,
-}
+})
 
 return function(): types.DataTypeInterface<Vector3>
   return vec3

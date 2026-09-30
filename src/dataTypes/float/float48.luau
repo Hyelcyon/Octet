@@ -1,10 +1,10 @@
 --!strict
 
-local types = require(script.Parent.Parent.Parent.types)
+const types = require(script.Parent.Parent.Parent.types)
 
-local scratch = buffer.create(8)
+const scratch = buffer.create(8)
 
-local float48: types.DataTypeInterface<number> = {
+const float48: types.DataTypeInterface<number> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: number, _references: { unknown }?): number
     buffer.writef64(scratch, 0, value)
     buffer.copy(b, cursor, scratch, 2, 6)
@@ -24,7 +24,7 @@ local float48: types.DataTypeInterface<number> = {
   size = @native function(_value: number): number
     return 6
   end,
-}
+})
 
 return function(): types.DataTypeInterface<number>
   return float48

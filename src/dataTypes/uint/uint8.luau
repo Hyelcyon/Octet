@@ -1,8 +1,8 @@
 --!strict
 
-local types = require(script.Parent.Parent.Parent.types)
+const types = require(script.Parent.Parent.Parent.types)
 
-local uint8: types.DataTypeInterface<number> = {
+const uint8: types.DataTypeInterface<number> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: number, _references: { unknown }?): number
     buffer.writeu8(b, cursor, value)
     return 1
@@ -19,7 +19,7 @@ local uint8: types.DataTypeInterface<number> = {
   size = @native function(_value: number): number
     return 1
   end,
-}
+})
 
 return function(): types.DataTypeInterface<number>
   return uint8

@@ -1,8 +1,8 @@
 --!strict
 
-local types = require(script.Parent.Parent.Parent.types)
+const types = require(script.Parent.Parent.Parent.types)
 
-local uint24: types.DataTypeInterface<number> = {
+const uint24: types.DataTypeInterface<number> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: number, _references: { unknown }?): number
     buffer.writeu16(b, cursor, bit32.band(value, 0xFFFF))
     buffer.writeu8(b, cursor + 2, bit32.rshift(value, 16))
@@ -10,8 +10,8 @@ local uint24: types.DataTypeInterface<number> = {
   end,
 
   read = @native function(b: buffer, cursor: number, _references: { unknown }?): (number, number)
-    local low = buffer.readu16(b, cursor)
-    local high = buffer.readu8(b, cursor + 2)
+    const low = buffer.readu16(b, cursor)
+    const high = buffer.readu8(b, cursor + 2)
     return bit32.bor(low, bit32.lshift(high, 16)), 3
   end,
 
@@ -22,7 +22,7 @@ local uint24: types.DataTypeInterface<number> = {
   size = @native function(_value: number): number
     return 3
   end,
-}
+})
 
 return function(): types.DataTypeInterface<number>
   return uint24

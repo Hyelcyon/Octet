@@ -1,8 +1,8 @@
 --!strict
 
-local RunService = game:GetService("RunService")
+const RunService = game:GetService("RunService")
 
-local types = require(script.Parent.types)
+const types = require(script.Parent.types)
 
 export type Channel = {
   buff: buffer,
@@ -16,10 +16,10 @@ type EventListener = {
   callback: (data: unknown) -> (),
 }
 
-local INITIAL_CHANNEL_SIZE = 512
+const INITIAL_CHANNEL_SIZE = 512
 
-local function createChannel(initialSize: number?): Channel
-  local size = if initialSize ~= nil then initialSize else INITIAL_CHANNEL_SIZE
+const function createChannel(initialSize: number?): Channel
+  const size = if initialSize ~= nil then initialSize else INITIAL_CHANNEL_SIZE
   return {
     buff = buffer.create(size),
     cursor = 0,
@@ -29,10 +29,10 @@ local function createChannel(initialSize: number?): Channel
 end
 
 @native
-local function ensureCapacity(channel: Channel, neededBytes: number)
+const function ensureCapacity(channel: Channel, neededBytes: number)
   if channel.cursor + neededBytes > channel.size then
-    local newSize = math.max(channel.size * 2, channel.cursor + neededBytes)
-    local newBuff = buffer.create(newSize)
+    const newSize = math.max(channel.size * 2, channel.cursor + neededBytes)
+    const newBuff = buffer.create(newSize)
     buffer.copy(newBuff, 0, channel.buff, 0, channel.cursor)
     channel.buff = newBuff
     channel.size = newSize
@@ -40,28 +40,28 @@ local function ensureCapacity(channel: Channel, neededBytes: number)
 end
 
 @native
-local function dumpChannel(channel: Channel): (buffer, { unknown }?)
-  local cursor = channel.cursor
+const function dumpChannel(channel: Channel): (buffer, { unknown }?)
+  const cursor = channel.cursor
   if cursor == 0 then
     return buffer.create(0), nil
   end
 
-  local dumpBuffer = buffer.create(cursor)
+  const dumpBuffer = buffer.create(cursor)
   buffer.copy(dumpBuffer, 0, channel.buff, 0, cursor)
-  local refs = if #channel.references > 0 then channel.references else nil
+  const refs = if #channel.references > 0 then channel.references else nil
   return dumpBuffer, refs
 end
 
 @native
-local function resetChannel(channel: Channel)
+const function resetChannel(channel: Channel)
   channel.cursor = 0
   table.clear(channel.references)
 end
 
-local reliableChannel: Channel = createChannel()
-local unreliableChannel: Channel = createChannel()
+const reliableChannel: Channel = createChannel()
+const unreliableChannel: Channel = createChannel()
 
-local eventListeners: { [number]: EventListener } = {}
+const eventListeners: { [number]: EventListener } = {}
 
 local reliableRemote: RemoteEvent
 local unreliableRemote: UnreliableRemoteEvent
@@ -70,27 +70,27 @@ local procedureRemoteFunction: RemoteFunction
 local client = {}
 
 @native
-local function onClientEvent(data: unknown, references: unknown)
+const function onClientEvent(data: unknown, references: unknown)
   if type(data) ~= "buffer" then
     return
   end
 
-  local dataBuffer = data :: buffer
-  local dataSize = buffer.len(dataBuffer)
+  const dataBuffer = data :: buffer
+  const dataSize = buffer.len(dataBuffer)
   if dataSize == 0 then
     return
   end
 
-  local refs = if type(references) == "table" then references :: { unknown } else nil
+  const refs = if type(references) == "table" then references :: { unknown } else nil
   local cursor = 0
 
   while cursor < dataSize do
-    local eventId = buffer.readu8(dataBuffer, cursor)
+    const eventId = buffer.readu8(dataBuffer, cursor)
     cursor += 1
 
-    local listener = eventListeners[eventId]
+    const listener = eventListeners[eventId]
     if listener ~= nil then
-      local eventData, readBytes = listener.codec.read(dataBuffer, cursor, refs)
+      const eventData, readBytes = listener.codec.read(dataBuffer, cursor, refs)
       cursor += readBytes
       task.spawn(listener.callback, eventData)
     else
@@ -101,21 +101,21 @@ end
 
 @native
 function client:sendReliable<T>(eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(reliableChannel, needed)
   buffer.writeu8(reliableChannel.buff, reliableChannel.cursor, eventId)
   reliableChannel.cursor += 1
-  local written = codec.write(reliableChannel.buff, reliableChannel.cursor, data, reliableChannel.references)
+  const written = codec.write(reliableChannel.buff, reliableChannel.cursor, data, reliableChannel.references)
   reliableChannel.cursor += written
 end
 
 @native
 function client:sendUnreliable<T>(eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(unreliableChannel, needed)
   buffer.writeu8(unreliableChannel.buff, unreliableChannel.cursor, eventId)
   unreliableChannel.cursor += 1
-  local written = codec.write(unreliableChannel.buff, unreliableChannel.cursor, data, unreliableChannel.references)
+  const written = codec.write(unreliableChannel.buff, unreliableChannel.cursor, data, unreliableChannel.references)
   unreliableChannel.cursor += written
 end
 
@@ -133,18 +133,18 @@ function client:callProcedure<Req, Res>(
   responseCodec: types.DataTypeInterface<Res>,
   requestData: Req
 ): Res?
-  local needed = requestCodec.size(requestData)
-  local tempChannel = createChannel(math.max(128, needed))
+  const needed = requestCodec.size(requestData)
+  const tempChannel = createChannel(math.max(128, needed))
   ensureCapacity(tempChannel, needed)
-  local written = requestCodec.write(tempChannel.buff, 0, requestData, tempChannel.references)
+  const written = requestCodec.write(tempChannel.buff, 0, requestData, tempChannel.references)
   tempChannel.cursor = written
 
-  local reqBuf, reqRefs = dumpChannel(tempChannel)
-  local resBuf, resRefs = procedureRemoteFunction:InvokeServer(reqBuf, reqRefs, procedureId)
+  const reqBuf, reqRefs = dumpChannel(tempChannel)
+  const resBuf, resRefs = procedureRemoteFunction:InvokeServer(reqBuf, reqRefs, procedureId)
 
   if type(resBuf) == "buffer" then
-    local refs = if type(resRefs) == "table" then resRefs :: { unknown } else nil
-    local decodedResponse = responseCodec.read(resBuf :: buffer, 0, refs)
+    const refs = if type(resRefs) == "table" then resRefs :: { unknown } else nil
+    const decodedResponse = responseCodec.read(resBuf :: buffer, 0, refs)
     return decodedResponse
   end
 
@@ -152,7 +152,7 @@ function client:callProcedure<Req, Res>(
 end
 
 function client:start()
-  local folder = script.Parent:WaitForChild("system")
+  const folder = script.Parent:WaitForChild("system")
 
   reliableRemote = folder:WaitForChild("OctetReliable") :: RemoteEvent
   reliableRemote.OnClientEvent:Connect(onClientEvent)
@@ -164,17 +164,17 @@ function client:start()
 
   RunService.Heartbeat:Connect(function()
     if reliableChannel.cursor > 0 then
-      local dumpBuf, dumpRefs = dumpChannel(reliableChannel)
+      const dumpBuf, dumpRefs = dumpChannel(reliableChannel)
       reliableRemote:FireServer(dumpBuf, dumpRefs)
       resetChannel(reliableChannel)
     end
 
     if unreliableChannel.cursor > 0 then
-      local dumpBuf, dumpRefs = dumpChannel(unreliableChannel)
+      const dumpBuf, dumpRefs = dumpChannel(unreliableChannel)
       unreliableRemote:FireServer(dumpBuf, dumpRefs)
       resetChannel(unreliableChannel)
     end
   end)
 end
 
-return client
+return table.freeze(client)

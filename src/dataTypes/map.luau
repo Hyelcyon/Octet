@@ -1,12 +1,12 @@
 --!strict
 
-local types = require(script.Parent.Parent.types)
+const types = require(script.Parent.Parent.types)
 
-local function map<K, V>(
+const function map<K, V>(
   keyType: types.DataTypeInterface<K>,
   valueType: types.DataTypeInterface<V>
 ): types.DataTypeInterface<{ [K]: V }>
-  return {
+  return table.freeze({
     write = @native function(b: buffer, cursor: number, value: { [K]: V }, references: { unknown }?): number
       local count = 0
       for _ in value do
@@ -25,14 +25,14 @@ local function map<K, V>(
     end,
 
     read = @native function(b: buffer, cursor: number, references: { unknown }?): ({ [K]: V }, number)
-      local count = buffer.readu16(b, cursor)
+      const count = buffer.readu16(b, cursor)
       local currentCursor = cursor + 2
-      local result: { [K]: V } = {}
+      const result: { [K]: V } = {}
 
       for _ = 1, count do
-        local k, kBytes = keyType.read(b, currentCursor, references)
+        const k, kBytes = keyType.read(b, currentCursor, references)
         currentCursor += kBytes
-        local v, vBytes = valueType.read(b, currentCursor, references)
+        const v, vBytes = valueType.read(b, currentCursor, references)
         currentCursor += vBytes
         result[k] = v
       end
@@ -41,7 +41,7 @@ local function map<K, V>(
     end,
 
     skip = @native function(b: buffer, cursor: number): number
-      local count = buffer.readu16(b, cursor)
+      const count = buffer.readu16(b, cursor)
       local currentCursor = cursor + 2
 
       for _ = 1, count do
@@ -59,7 +59,7 @@ local function map<K, V>(
       end
       return total
     end,
-  }
+  })
 end
 
 return map

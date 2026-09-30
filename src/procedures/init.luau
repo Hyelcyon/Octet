@@ -1,23 +1,23 @@
 --!strict
 
-local types = require(script.Parent.types)
-local procedure = require(script.procedure)
+const types = require(script.Parent.types)
+const procedure = require(script.procedure)
 
 local autoProcedureId = 0
 
-local function defineProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>): types.DefinedProcedure<Req, Res>
+const function defineProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>): types.DefinedProcedure<Req, Res>
   autoProcedureId += 1
-  local defaultId = autoProcedureId
+  const defaultId = autoProcedureId
   local instantiated: types.Procedure<Req, Res>? = nil
 
-  local function getInstance(): types.Procedure<Req, Res>
+  const function getInstance(): types.Procedure<Req, Res>
     if instantiated == nil then
       instantiated = procedure(props, defaultId)
     end
     return instantiated :: types.Procedure<Req, Res>
   end
 
-  local definition: types.DefinedProcedure<Req, Res> = {
+  const definition: types.DefinedProcedure<Req, Res> = table.freeze({
     build = function(id: number): types.Procedure<Req, Res>
       return procedure(props, id)
     end,
@@ -27,7 +27,7 @@ local function defineProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>):
     handle = function(_self: types.Procedure<Req, Res>, callback: (request: Req, player: Player) -> Res): () -> ()
       return getInstance():handle(callback)
     end,
-  }
+  })
 
   return definition
 end

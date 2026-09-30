@@ -1,9 +1,9 @@
 --!strict
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+const Players = game:GetService("Players")
+const RunService = game:GetService("RunService")
 
-local types = require(script.Parent.types)
+const types = require(script.Parent.types)
 
 export type Channel = {
   buff: buffer,
@@ -28,12 +28,12 @@ type RateLimit = {
   currentBytes: number,
 }
 
-local INITIAL_CHANNEL_SIZE = 512
-local MAX_PACKET_SIZE = 65536
-local RATE_LIMIT_BYTES_PER_SEC = 65536
+const INITIAL_CHANNEL_SIZE = 512
+const MAX_PACKET_SIZE = 65_536
+const RATE_LIMIT_BYTES_PER_SEC = 65_536
 
-local function createChannel(initialSize: number?): Channel
-  local size = if initialSize ~= nil then initialSize else INITIAL_CHANNEL_SIZE
+const function createChannel(initialSize: number?): Channel
+  const size = if initialSize ~= nil then initialSize else INITIAL_CHANNEL_SIZE
   return {
     buff = buffer.create(size),
     cursor = 0,
@@ -43,10 +43,10 @@ local function createChannel(initialSize: number?): Channel
 end
 
 @native
-local function ensureCapacity(channel: Channel, neededBytes: number)
+const function ensureCapacity(channel: Channel, neededBytes: number)
   if channel.cursor + neededBytes > channel.size then
-    local newSize = math.max(channel.size * 2, channel.cursor + neededBytes)
-    local newBuff = buffer.create(newSize)
+    const newSize = math.max(channel.size * 2, channel.cursor + neededBytes)
+    const newBuff = buffer.create(newSize)
     buffer.copy(newBuff, 0, channel.buff, 0, channel.cursor)
     channel.buff = newBuff
     channel.size = newSize
@@ -54,38 +54,38 @@ local function ensureCapacity(channel: Channel, neededBytes: number)
 end
 
 @native
-local function dumpChannel(channel: Channel): (buffer, { unknown }?)
-  local cursor = channel.cursor
+const function dumpChannel(channel: Channel): (buffer, { unknown }?)
+  const cursor = channel.cursor
   if cursor == 0 then
     return buffer.create(0), nil
   end
 
-  local dumpBuffer = buffer.create(cursor)
+  const dumpBuffer = buffer.create(cursor)
   buffer.copy(dumpBuffer, 0, channel.buff, 0, cursor)
-  local refs = if #channel.references > 0 then channel.references else nil
+  const refs = if #channel.references > 0 then channel.references else nil
   return dumpBuffer, refs
 end
 
 @native
-local function resetChannel(channel: Channel)
+const function resetChannel(channel: Channel)
   channel.cursor = 0
   table.clear(channel.references)
 end
 
-local globalReliable: Channel = createChannel()
-local globalUnreliable: Channel = createChannel()
-local perPlayerReliable: { [Player]: Channel } = {}
-local perPlayerUnreliable: { [Player]: Channel } = {}
-local playerRateLimits: { [Player]: RateLimit } = {}
+const globalReliable: Channel = createChannel()
+const globalUnreliable: Channel = createChannel()
+const perPlayerReliable: { [Player]: Channel } = {}
+const perPlayerUnreliable: { [Player]: Channel } = {}
+const playerRateLimits: { [Player]: RateLimit } = {}
 
-local activeReliablePlayers: { Player } = table.create(64) :: { Player }
-local isReliablePlayerDirty: { [Player]: boolean } = {}
+const activeReliablePlayers: { Player } = table.create(64) :: { Player }
+const isReliablePlayerDirty: { [Player]: boolean } = {}
 
-local activeUnreliablePlayers: { Player } = table.create(64) :: { Player }
-local isUnreliablePlayerDirty: { [Player]: boolean } = {}
+const activeUnreliablePlayers: { Player } = table.create(64) :: { Player }
+const isUnreliablePlayerDirty: { [Player]: boolean } = {}
 
-local eventListeners: { [number]: EventListener } = {}
-local procedureHandlers: { [number]: ProcedureHandler } = {}
+const eventListeners: { [number]: EventListener } = {}
+const procedureHandlers: { [number]: ProcedureHandler } = {}
 
 local reliableRemote: RemoteEvent
 local unreliableRemote: UnreliableRemoteEvent
@@ -94,14 +94,14 @@ local procedureRemoteFunction: RemoteFunction
 local server = {}
 
 @native
-local function checkRateLimit(player: Player, size: number): boolean
-  local limit = playerRateLimits[player]
+const function checkRateLimit(player: Player, size: number): boolean
+  const limit = playerRateLimits[player]
   if limit == nil then
     return true
   end
 
-  local now = os.clock()
-  local elapsed = now - limit.lastTime
+  const now = os.clock()
+  const elapsed = now - limit.lastTime
   limit.currentBytes = math.min(limit.currentBytes + (elapsed * RATE_LIMIT_BYTES_PER_SEC), RATE_LIMIT_BYTES_PER_SEC)
   limit.lastTime = now
 
@@ -114,13 +114,13 @@ local function checkRateLimit(player: Player, size: number): boolean
 end
 
 @native
-local function onServerEvent(player: Player, data: unknown, references: unknown)
+const function onServerEvent(player: Player, data: unknown, references: unknown)
   if type(data) ~= "buffer" then
     return
   end
 
-  local dataBuffer = data :: buffer
-  local dataSize = buffer.len(dataBuffer)
+  const dataBuffer = data :: buffer
+  const dataSize = buffer.len(dataBuffer)
   if dataSize == 0 or dataSize > MAX_PACKET_SIZE then
     return
   end
@@ -129,16 +129,16 @@ local function onServerEvent(player: Player, data: unknown, references: unknown)
     return
   end
 
-  local refs = if type(references) == "table" then references :: { unknown } else nil
+  const refs = if type(references) == "table" then references :: { unknown } else nil
   local cursor = 0
 
   while cursor < dataSize do
-    local eventId = buffer.readu8(dataBuffer, cursor)
+    const eventId = buffer.readu8(dataBuffer, cursor)
     cursor += 1
 
-    local listener = eventListeners[eventId]
+    const listener = eventListeners[eventId]
     if listener ~= nil then
-      local eventData, readBytes = listener.codec.read(dataBuffer, cursor, refs)
+      const eventData, readBytes = listener.codec.read(dataBuffer, cursor, refs)
       cursor += readBytes
       task.spawn(listener.callback, eventData, player)
     else
@@ -148,7 +148,7 @@ local function onServerEvent(player: Player, data: unknown, references: unknown)
 end
 
 @native
-local function onServerInvoke(
+const function onServerInvoke(
   player: Player,
   data: unknown,
   references: unknown,
@@ -158,35 +158,35 @@ local function onServerInvoke(
     return nil, nil
   end
 
-  local dataBuffer = data :: buffer
-  local dataSize = buffer.len(dataBuffer)
+  const dataBuffer = data :: buffer
+  const dataSize = buffer.len(dataBuffer)
   if dataSize > MAX_PACKET_SIZE or not checkRateLimit(player, dataSize) then
     return nil, nil
   end
 
-  local handler = procedureHandlers[procedureId :: number]
+  const handler = procedureHandlers[procedureId :: number]
   if handler == nil then
     return nil, nil
   end
 
-  local refs = if type(references) == "table" then references :: { unknown } else nil
-  local requestData = handler.requestCodec.read(dataBuffer, 0, refs)
-  local success, responseData = pcall(handler.callback, requestData, player)
+  const refs = if type(references) == "table" then references :: { unknown } else nil
+  const requestData = handler.requestCodec.read(dataBuffer, 0, refs)
+  const success, responseData = pcall(handler.callback, requestData, player)
   if not success then
     warn(`[Octet] Procedure handler error (id {procedureId}): {responseData}`)
     return nil, nil
   end
 
-  local needed = handler.responseCodec.size(responseData)
-  local tempChannel = createChannel(math.max(128, needed))
+  const needed = handler.responseCodec.size(responseData)
+  const tempChannel = createChannel(math.max(128, needed))
   ensureCapacity(tempChannel, needed)
-  local written = handler.responseCodec.write(tempChannel.buff, 0, responseData, tempChannel.references)
+  const written = handler.responseCodec.write(tempChannel.buff, 0, responseData, tempChannel.references)
   tempChannel.cursor = written
 
   return dumpChannel(tempChannel)
 end
 
-local function onPlayerAdded(player: Player)
+const function onPlayerAdded(player: Player)
   perPlayerReliable[player] = createChannel()
   perPlayerUnreliable[player] = createChannel()
   playerRateLimits[player] = {
@@ -195,7 +195,7 @@ local function onPlayerAdded(player: Player)
   }
 end
 
-local function onPlayerRemoving(player: Player)
+const function onPlayerRemoving(player: Player)
   perPlayerReliable[player] = nil
   perPlayerUnreliable[player] = nil
   isReliablePlayerDirty[player] = nil
@@ -205,35 +205,35 @@ end
 
 @native
 function server:sendAllReliable<T>(eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(globalReliable, needed)
   buffer.writeu8(globalReliable.buff, globalReliable.cursor, eventId)
   globalReliable.cursor += 1
-  local written = codec.write(globalReliable.buff, globalReliable.cursor, data, globalReliable.references)
+  const written = codec.write(globalReliable.buff, globalReliable.cursor, data, globalReliable.references)
   globalReliable.cursor += written
 end
 
 @native
 function server:sendAllUnreliable<T>(eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(globalUnreliable, needed)
   buffer.writeu8(globalUnreliable.buff, globalUnreliable.cursor, eventId)
   globalUnreliable.cursor += 1
-  local written = codec.write(globalUnreliable.buff, globalUnreliable.cursor, data, globalUnreliable.references)
+  const written = codec.write(globalUnreliable.buff, globalUnreliable.cursor, data, globalUnreliable.references)
   globalUnreliable.cursor += written
 end
 
 @native
 function server:sendPlayerReliable<T>(player: Player, eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local channel = perPlayerReliable[player]
+  const channel = perPlayerReliable[player]
   if channel == nil then
     return
   end
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(channel, needed)
   buffer.writeu8(channel.buff, channel.cursor, eventId)
   channel.cursor += 1
-  local written = codec.write(channel.buff, channel.cursor, data, channel.references)
+  const written = codec.write(channel.buff, channel.cursor, data, channel.references)
   channel.cursor += written
 
   if not isReliablePlayerDirty[player] then
@@ -244,15 +244,15 @@ end
 
 @native
 function server:sendPlayerUnreliable<T>(player: Player, eventId: number, codec: types.DataTypeInterface<T>, data: T)
-  local channel = perPlayerUnreliable[player]
+  const channel = perPlayerUnreliable[player]
   if channel == nil then
     return
   end
-  local needed = codec.size(data) + 1
+  const needed = codec.size(data) + 1
   ensureCapacity(channel, needed)
   buffer.writeu8(channel.buff, channel.cursor, eventId)
   channel.cursor += 1
-  local written = codec.write(channel.buff, channel.cursor, data, channel.references)
+  const written = codec.write(channel.buff, channel.cursor, data, channel.references)
   channel.cursor += written
 
   if not isUnreliablePlayerDirty[player] then
@@ -297,7 +297,7 @@ function server:unregisterProcedure(procedureId: number)
 end
 
 function server:start()
-  local folder = script.Parent:FindFirstChild("system") or Instance.new("Folder")
+  const folder = script.Parent:FindFirstChild("system") or Instance.new("Folder")
   folder.Name = "system"
   folder.Parent = script.Parent
 
@@ -325,21 +325,21 @@ function server:start()
 
   RunService.Heartbeat:Connect(function()
     if globalReliable.cursor > 0 then
-      local dumpBuf, dumpRefs = dumpChannel(globalReliable)
+      const dumpBuf, dumpRefs = dumpChannel(globalReliable)
       reliableRemote:FireAllClients(dumpBuf, dumpRefs)
       resetChannel(globalReliable)
     end
 
     if globalUnreliable.cursor > 0 then
-      local dumpBuf, dumpRefs = dumpChannel(globalUnreliable)
+      const dumpBuf, dumpRefs = dumpChannel(globalUnreliable)
       unreliableRemote:FireAllClients(dumpBuf, dumpRefs)
       resetChannel(globalUnreliable)
     end
 
     for _, player in activeReliablePlayers do
-      local channel = perPlayerReliable[player]
+      const channel = perPlayerReliable[player]
       if channel ~= nil and channel.cursor > 0 then
-        local dumpBuf, dumpRefs = dumpChannel(channel)
+        const dumpBuf, dumpRefs = dumpChannel(channel)
         reliableRemote:FireClient(player, dumpBuf, dumpRefs)
         resetChannel(channel)
       end
@@ -348,9 +348,9 @@ function server:start()
     table.clear(activeReliablePlayers)
 
     for _, player in activeUnreliablePlayers do
-      local channel = perPlayerUnreliable[player]
+      const channel = perPlayerUnreliable[player]
       if channel ~= nil and channel.cursor > 0 then
-        local dumpBuf, dumpRefs = dumpChannel(channel)
+        const dumpBuf, dumpRefs = dumpChannel(channel)
         unreliableRemote:FireClient(player, dumpBuf, dumpRefs)
         resetChannel(channel)
       end
@@ -360,4 +360,4 @@ function server:start()
   end)
 end
 
-return server
+return table.freeze(server)

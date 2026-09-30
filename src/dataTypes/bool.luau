@@ -1,8 +1,8 @@
 --!strict
 
-local types = require(script.Parent.Parent.types)
+const types = require(script.Parent.Parent.types)
 
-local bool: types.DataTypeInterface<boolean> = {
+const bool: types.DataTypeInterface<boolean> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: boolean, _references: { unknown }?): number
     buffer.writeu8(b, cursor, if value then 1 else 0)
     return 1
@@ -19,7 +19,7 @@ local bool: types.DataTypeInterface<boolean> = {
   size = @native function(_value: boolean): number
     return 1
   end,
-}
+})
 
 return function(): types.DataTypeInterface<boolean>
   return bool
