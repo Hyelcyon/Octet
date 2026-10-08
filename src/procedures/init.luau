@@ -11,10 +11,13 @@ const function defineProcedure<Req, Res>(props: types.ProcedureProps<Req, Res>):
   local instantiated: types.Procedure<Req, Res>? = nil
 
   const function getInstance(): types.Procedure<Req, Res>
-    if instantiated == nil then
-      instantiated = procedure(props, defaultId)
+    local instance = instantiated
+    if instance ~= nil then
+      return instance
     end
-    return instantiated :: types.Procedure<Req, Res>
+    instance = procedure(props, defaultId)
+    instantiated = instance
+    return instance
   end
 
   const definition: types.DefinedProcedure<Req, Res> = table.freeze({

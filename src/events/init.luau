@@ -11,10 +11,13 @@ const function defineEvent<T>(props: types.EventProps<T>): types.DefinedEvent<T>
   local instantiated: types.Event<T>? = nil
 
   const function getInstance(): types.Event<T>
-    if instantiated == nil then
-      instantiated = event(props, defaultId)
+    local instance = instantiated
+    if instance ~= nil then
+      return instance
     end
-    return instantiated :: types.Event<T>
+    instance = event(props, defaultId)
+    instantiated = instance
+    return instance
   end
 
   const definition: types.DefinedEvent<T> = table.freeze({

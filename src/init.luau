@@ -58,7 +58,7 @@ else
   client:start()
 end
 
-const dts = table.freeze({
+const dts: types.Octet = table.freeze({
   event = event,
   procedure = procedure,
   contract = contract,
@@ -95,4 +95,4 @@ const dts = table.freeze({
   struct = struct,
 })
 
-return (dts :: unknown) :: types.Octet
+return dts

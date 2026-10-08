@@ -87,11 +87,7 @@ const isUnreliablePlayerDirty: { [Player]: boolean } = {}
 const eventListeners: { [number]: EventListener } = {}
 const procedureHandlers: { [number]: ProcedureHandler } = {}
 
-local reliableRemote: RemoteEvent
-local unreliableRemote: UnreliableRemoteEvent
-local procedureRemoteFunction: RemoteFunction
-
-local server = {}
+const server = {}
 
 @native
 const function checkRateLimit(player: Player, size: number): boolean
@@ -301,17 +297,17 @@ function server:start()
   folder.Name = "system"
   folder.Parent = script.Parent
 
-  reliableRemote = folder:FindFirstChild("OctetReliable") or Instance.new("RemoteEvent")
+  const reliableRemote = folder:FindFirstChild("OctetReliable") or Instance.new("RemoteEvent")
   reliableRemote.Name = "OctetReliable"
   reliableRemote.OnServerEvent:Connect(onServerEvent)
   reliableRemote.Parent = folder
 
-  unreliableRemote = folder:FindFirstChild("OctetUnreliable") or Instance.new("UnreliableRemoteEvent")
+  const unreliableRemote = folder:FindFirstChild("OctetUnreliable") or Instance.new("UnreliableRemoteEvent")
   unreliableRemote.Name = "OctetUnreliable"
   unreliableRemote.OnServerEvent:Connect(onServerEvent)
   unreliableRemote.Parent = folder
 
-  procedureRemoteFunction = folder:FindFirstChild("OctetProcedure") or Instance.new("RemoteFunction")
+  const procedureRemoteFunction = folder:FindFirstChild("OctetProcedure") or Instance.new("RemoteFunction")
   procedureRemoteFunction.Name = "OctetProcedure"
   procedureRemoteFunction.OnServerInvoke = onServerInvoke
   procedureRemoteFunction.Parent = folder

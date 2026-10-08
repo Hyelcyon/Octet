@@ -63,11 +63,20 @@ const unreliableChannel: Channel = createChannel()
 
 const eventListeners: { [number]: EventListener } = {}
 
-local reliableRemote: RemoteEvent
-local unreliableRemote: UnreliableRemoteEvent
-local procedureRemoteFunction: RemoteFunction
+local procedureRemote: RemoteFunction? = nil
 
-local client = {}
+const function getProcedureRemote(): RemoteFunction
+  local remote = procedureRemote
+  if remote ~= nil then
+    return remote
+  end
+  const folder = script.Parent:WaitForChild("system")
+  remote = folder:WaitForChild("OctetProcedure") :: RemoteFunction
+  procedureRemote = remote
+  return remote
+end
+
+const client = {}
 
 @native
 const function onClientEvent(data: unknown, references: unknown)
@@ -140,7 +149,8 @@ function client:callProcedure<Req, Res>(
   tempChannel.cursor = written
 
   const reqBuf, reqRefs = dumpChannel(tempChannel)
-  const resBuf, resRefs = procedureRemoteFunction:InvokeServer(reqBuf, reqRefs, procedureId)
+  const procedure = getProcedureRemote()
+  const resBuf, resRefs = procedure:InvokeServer(reqBuf, reqRefs, procedureId)
 
   if type(resBuf) == "buffer" then
     const refs = if type(resRefs) == "table" then resRefs :: { unknown } else nil
@@ -154,13 +164,13 @@ end
 function client:start()
   const folder = script.Parent:WaitForChild("system")
 
-  reliableRemote = folder:WaitForChild("OctetReliable") :: RemoteEvent
+  const reliableRemote = folder:WaitForChild("OctetReliable") :: RemoteEvent
   reliableRemote.OnClientEvent:Connect(onClientEvent)
 
-  unreliableRemote = folder:WaitForChild("OctetUnreliable") :: UnreliableRemoteEvent
+  const unreliableRemote = folder:WaitForChild("OctetUnreliable") :: UnreliableRemoteEvent
   unreliableRemote.OnClientEvent:Connect(onClientEvent)
 
-  procedureRemoteFunction = folder:WaitForChild("OctetProcedure") :: RemoteFunction
+  getProcedureRemote()
 
   RunService.Heartbeat:Connect(function()
     if reliableChannel.cursor > 0 then

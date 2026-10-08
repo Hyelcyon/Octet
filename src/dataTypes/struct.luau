@@ -18,7 +18,7 @@ const function struct<T>(schema: { [string]: types.DataTypeInterface<unknown> })
 
   const codec: types.DataTypeInterface<T> = table.freeze({
     write = @native function(b: buffer, cursor: number, value: T, references: { unknown }?): number
-      const tbl = (value :: unknown) :: { [string]: unknown }
+      const tbl = value :: { [string]: unknown }
       local currentCursor = cursor
       for i, key in keys do
         currentCursor += orderedCodecs[i].write(b, currentCursor, tbl[key], references)
@@ -34,7 +34,7 @@ const function struct<T>(schema: { [string]: types.DataTypeInterface<unknown> })
         result[key] = val
         currentCursor += readBytes
       end
-      return (result :: unknown) :: T, currentCursor - cursor
+      return result :: T, currentCursor - cursor
     end,
 
     skip = @native function(b: buffer, cursor: number): number
@@ -46,7 +46,7 @@ const function struct<T>(schema: { [string]: types.DataTypeInterface<unknown> })
     end,
 
     size = @native function(value: T): number
-      const tbl = (value :: unknown) :: { [string]: unknown }
+      const tbl = value :: { [string]: unknown }
       local total = 0
       for i, key in keys do
         total += orderedCodecs[i].size(tbl[key])

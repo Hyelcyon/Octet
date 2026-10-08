@@ -13,7 +13,7 @@ type NodeEntry = {
 
 const function contract<T>(schema: T): T
   if type(schema) ~= "table" then
-    return (schema :: any) :: T
+    return schema :: T
   end
 
   const entries: { NodeEntry } = {}
@@ -28,7 +28,7 @@ const function contract<T>(schema: T): T
             path = subPath,
             parent = node,
             key = key,
-            buildable = (candidate :: unknown) :: Buildable,
+            buildable = candidate :: Buildable,
           })
         else
           traverse(candidate, subPath)
@@ -37,7 +37,7 @@ const function contract<T>(schema: T): T
     end
   end
 
-  traverse((schema :: unknown) :: { [string]: unknown }, "")
+  traverse(schema :: { [string]: unknown }, "")
 
   table.sort(entries, function(a: NodeEntry, b: NodeEntry): boolean
     return a.path < b.path
@@ -47,7 +47,7 @@ const function contract<T>(schema: T): T
     entry.parent[entry.key] = entry.buildable.build(id)
   end
 
-  return (schema :: any) :: T
+  return schema :: T
 end
 
 return contract

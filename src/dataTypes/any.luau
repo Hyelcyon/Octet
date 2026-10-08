@@ -213,103 +213,95 @@ const SKIPPERS: { [number]: Skipper } = table.freeze({
 
 const any: types.DataTypeInterface<unknown> = table.freeze({
   write = @native function(b: buffer, cursor: number, value: unknown, references: { unknown }?): number
-    const vType = typeof(value)
-
-    if vType == "number" then
-      const num = value :: number
-      if num % 1 == 0 and num >= -2147483648 and num <= 4294967295 then
-        if num >= 0 then
-          if num <= 255 then
+    if typeof(value) == "number" then
+      if value % 1 == 0 and value >= -2147483648 and value <= 4294967295 then
+        if value >= 0 then
+          if value <= 255 then
             buffer.writeu8(b, cursor, TAG_UINT8)
-            buffer.writeu8(b, cursor + 1, num)
+            buffer.writeu8(b, cursor + 1, value)
             return 2
-          elseif num <= 65535 then
+          elseif value <= 65535 then
             buffer.writeu8(b, cursor, TAG_UINT16)
-            buffer.writeu16(b, cursor + 1, num)
+            buffer.writeu16(b, cursor + 1, value)
             return 3
-          elseif num <= 16777215 then
+          elseif value <= 16777215 then
             buffer.writeu8(b, cursor, TAG_UINT24)
-            buffer.writeu16(b, cursor + 1, bit32.band(num, 0xFFFF))
-            buffer.writeu8(b, cursor + 3, bit32.rshift(num, 16))
+            buffer.writeu16(b, cursor + 1, bit32.band(value, 0xFFFF))
+            buffer.writeu8(b, cursor + 3, bit32.rshift(value, 16))
             return 4
           else
             buffer.writeu8(b, cursor, TAG_UINT32)
-            buffer.writeu32(b, cursor + 1, num)
+            buffer.writeu32(b, cursor + 1, value)
             return 5
           end
         else
-          if num >= -128 then
+          if value >= -128 then
             buffer.writeu8(b, cursor, TAG_INT8)
-            buffer.writei8(b, cursor + 1, num)
+            buffer.writei8(b, cursor + 1, value)
             return 2
-          elseif num >= -32768 then
+          elseif value >= -32768 then
             buffer.writeu8(b, cursor, TAG_INT16)
-            buffer.writei16(b, cursor + 1, num)
+            buffer.writei16(b, cursor + 1, value)
             return 3
-          elseif num >= -8388608 then
+          elseif value >= -8388608 then
             buffer.writeu8(b, cursor, TAG_INT24)
-            buffer.writeu16(b, cursor + 1, bit32.band(num, 0xFFFF))
-            buffer.writei8(b, cursor + 3, bit32.arshift(num, 16))
+            buffer.writeu16(b, cursor + 1, bit32.band(value, 0xFFFF))
+            buffer.writei8(b, cursor + 3, bit32.arshift(value, 16))
             return 4
           else
             buffer.writeu8(b, cursor, TAG_INT32)
-            buffer.writei32(b, cursor + 1, num)
+            buffer.writei32(b, cursor + 1, value)
             return 5
           end
         end
       else
-        buffer.writef32(scratch, 0, num)
-        if buffer.readf32(scratch, 0) == num then
+        buffer.writef32(scratch, 0, value)
+        if buffer.readf32(scratch, 0) == value then
           buffer.writeu8(b, cursor, TAG_FLOAT32)
-          buffer.writef32(b, cursor + 1, num)
+          buffer.writef32(b, cursor + 1, value)
           return 5
         else
           buffer.writeu8(b, cursor, TAG_FLOAT64)
-          buffer.writef64(b, cursor + 1, num)
+          buffer.writef64(b, cursor + 1, value)
           return 9
         end
       end
-    elseif vType == "boolean" then
+    elseif typeof(value) == "boolean" then
       buffer.writeu8(b, cursor, if value then TAG_BOOL_TRUE else TAG_BOOL_FALSE)
       return 1
-    elseif vType == "string" then
-      const str = value :: string
-      const len = #str
+    elseif typeof(value) == "string" then
+      const len = #value
       if len <= 255 then
         buffer.writeu8(b, cursor, TAG_STR8)
         buffer.writeu8(b, cursor + 1, len)
-        buffer.writestring(b, cursor + 2, str, len)
+        buffer.writestring(b, cursor + 2, value, len)
         return len + 2
       else
         buffer.writeu8(b, cursor, TAG_STR16)
         buffer.writeu16(b, cursor + 1, len)
-        buffer.writestring(b, cursor + 3, str, len)
+        buffer.writestring(b, cursor + 3, value, len)
         return len + 3
       end
-    elseif vType == "Vector3" then
-      const v3 = value :: Vector3
+    elseif typeof(value) == "Vector3" then
       buffer.writeu8(b, cursor, TAG_VEC3)
-      buffer.writef32(b, cursor + 1, v3.X)
-      buffer.writef32(b, cursor + 5, v3.Y)
-      buffer.writef32(b, cursor + 9, v3.Z)
+      buffer.writef32(b, cursor + 1, value.X)
+      buffer.writef32(b, cursor + 5, value.Y)
+      buffer.writef32(b, cursor + 9, value.Z)
       return 13
-    elseif vType == "Vector2" then
-      const v2 = value :: Vector2
+    elseif typeof(value) == "Vector2" then
       buffer.writeu8(b, cursor, TAG_VEC2)
-      buffer.writef32(b, cursor + 1, v2.X)
-      buffer.writef32(b, cursor + 5, v2.Y)
+      buffer.writef32(b, cursor + 1, value.X)
+      buffer.writef32(b, cursor + 5, value.Y)
       return 9
-    elseif vType == "Color3" then
-      const c3 = value :: Color3
+    elseif typeof(value) == "Color3" then
       buffer.writeu8(b, cursor, TAG_COLOR3)
-      buffer.writeu8(b, cursor + 1, math.round(c3.R * 255))
-      buffer.writeu8(b, cursor + 2, math.round(c3.G * 255))
-      buffer.writeu8(b, cursor + 3, math.round(c3.B * 255))
+      buffer.writeu8(b, cursor + 1, math.round(value.R * 255))
+      buffer.writeu8(b, cursor + 2, math.round(value.G * 255))
+      buffer.writeu8(b, cursor + 3, math.round(value.B * 255))
       return 4
-    elseif vType == "CFrame" then
-      const cf = value :: CFrame
-      const x, y, z = cf.X, cf.Y, cf.Z
-      local axis, angle = cf:ToAxisAngle()
+    elseif typeof(value) == "CFrame" then
+      const x, y, z = value.X, value.Y, value.Z
+      local axis, angle = value:ToAxisAngle()
       axis *= angle
       buffer.writeu8(b, cursor, TAG_CFRAME)
       buffer.writef32(b, cursor + 1, x)
@@ -319,7 +311,7 @@ const any: types.DataTypeInterface<unknown> = table.freeze({
       buffer.writef32(b, cursor + 17, axis.Y)
       buffer.writef32(b, cursor + 21, axis.Z)
       return 25
-    elseif vType == "nil" then
+    elseif value == nil then
       buffer.writeu8(b, cursor, TAG_NIL)
       return 1
     else
@@ -353,23 +345,22 @@ const any: types.DataTypeInterface<unknown> = table.freeze({
   end,
 
   size = @native function(value: unknown): number
-    const vType = typeof(value)
-    if vType == "number" then
+    if typeof(value) == "number" then
       return 9
-    elseif vType == "boolean" then
+    elseif typeof(value) == "boolean" then
       return 1
-    elseif vType == "string" then
-      const len = #(value :: string)
+    elseif typeof(value) == "string" then
+      const len = #value
       return if len <= 255 then len + 2 else len + 3
-    elseif vType == "Vector2" then
+    elseif typeof(value) == "Vector2" then
       return 9
-    elseif vType == "Vector3" then
+    elseif typeof(value) == "Vector3" then
       return 13
-    elseif vType == "Color3" then
+    elseif typeof(value) == "Color3" then
       return 4
-    elseif vType == "CFrame" then
+    elseif typeof(value) == "CFrame" then
       return 25
-    elseif vType == "nil" then
+    elseif value == nil then
       return 1
     else
       return 3

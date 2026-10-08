@@ -19,7 +19,7 @@ const function array<T>(valueType: types.DataTypeInterface<T>): types.DataTypeIn
     read = @native function(b: buffer, cursor: number, references: { unknown }?): ({ T }, number)
       const count = buffer.readu16(b, cursor)
       local currentCursor = cursor + 2
-      const arr = table.create(count) :: { T }
+      const arr: { T } = table.create(count)
 
       for i = 1, count do
         const item, readBytes = valueType.read(b, currentCursor, references)
